@@ -1,11 +1,5 @@
-# Use official Python runtime
+# Use official lightweight Python image
 FROM python:3.10-slim
-
-# Install system dependencies for OpenCV and FFmpeg inside Linux
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libgl1-mesa-glx \
-    libglib2.0-0 \
-    && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app
@@ -24,7 +18,7 @@ RUN mkdir -p uploads processed
 # Expose the Flask port
 EXPOSE 5000
 
-# Set environment variable for Flask production/dev
+# Set environment variable for Flask production
 ENV FLASK_ENV=production
 
 # Run server
