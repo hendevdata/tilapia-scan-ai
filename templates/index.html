@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tilapia Scan - Acuicultura 4.0</title>
+    <!-- Google Fonts: Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-icon">
+                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="css-i6dzq1"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+                </div>
+                <h2>TilapiaScan<span>AI</span></h2>
+            </div>
+            
+            <nav class="sidebar-menu">
+                <button class="menu-item active" data-tab="dashboard-tab">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="menu-icon"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+                    Monitoreo Local
+                </button>
+                <button class="menu-item" data-tab="vision-tab">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="menu-icon"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                    Procesar Videos
+                </button>
+                <button class="menu-item" data-tab="settings-tab">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="menu-icon"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    Calibración ROI
+                </button>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="status-badge local-active">
+                    <span class="pulse-dot"></span>
+                    <span class="status-text">Edge Node Activo</span>
+                </div>
+                <p>Acuicultura 4.0 - Piloto V1.0</p>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header bar -->
+            <header class="top-header">
+                <div class="header-title">
+                    <h1 id="page-title">Panel de Monitoreo Local</h1>
+                    <p id="page-subtitle">Monitoreo de turbulencia y variables biológicas en tiempo real (cada 30 min).</p>
+                </div>
+                <div class="header-actions">
+                    <!-- Centro de Alertas -->
+                    <div class="notification-bell-container">
+                        <button class="btn btn-secondary btn-icon-only" id="btn-bell" title="Centro de Alertas">
+                            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="bell-icon"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                            <span class="bell-badge" id="bell-badge">0</span>
+                        </button>
+                        <div class="notification-dropdown" id="notification-dropdown">
+                            <div class="dropdown-header">
+                                <h3>Alertas del Estanque</h3>
+                                <button class="btn-clear-alerts" id="btn-clear-alerts">Marcar leídas</button>
+                            </div>
+                            <div class="dropdown-body" id="dropdown-alerts-list">
+                                <!-- Se llena dinámicamente -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-secondary" id="btn-process-demo">
+                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                        Simular Alimentación
+                    </button>
+                </div>
+            </header>
+
+            <!-- TAB 1: DASHBOARD -->
+            <section id="dashboard-tab" class="tab-content active">
+                <!-- KPI Grid -->
+                <div class="kpi-grid">
+                    <!-- Pond Status Card -->
+                    <div class="card kpi-card" id="kpi-status-card">
+                        <div class="kpi-icon status-optimal">
+                            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                        </div>
+                        <div class="kpi-data">
+                            <h3>Estado Biológico</h3>
+                            <p class="kpi-value" id="kpi-status-value">ÓPTIMO</p>
+                            <span class="kpi-subtext" id="kpi-status-desc">Condiciones biológicas estables</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Fish Count Card -->
+                    <div class="card kpi-card">
+                        <div class="kpi-icon">
+                            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                        </div>
+                        <div class="kpi-data">
+                            <h3>Peces Detectados (Prom)</h3>
+                            <p class="kpi-value" id="kpi-fish-value">--</p>
+                            <span class="kpi-subtext">Conteo por visión por computadora</span>
+                        </div>
+                    </div>
+
+                    <!-- Feeding Intensity Card -->
+                    <div class="card kpi-card">
+                        <div class="kpi-icon">
+                            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                        </div>
+                        <div class="kpi-data">
+                            <h3>Eficiencia Alimentaria</h3>
+                            <p class="kpi-value" id="kpi-frenzy-value">--</p>
+                            <span class="kpi-subtext">Frenesí medio registrado</span>
+                        </div>
+                    </div>
+
+                    <!-- Water Quality Card -->
+                    <div class="card kpi-card">
+                        <div class="kpi-icon">
+                            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>
+                        </div>
+                        <div class="kpi-data">
+                            <h3>Calidad del Agua</h3>
+                            <p class="kpi-value" id="kpi-water-value">--</p>
+                            <span class="kpi-subtext" id="kpi-water-desc">Oxígeno y pH estimados</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="charts-row">
+                    <div class="card chart-card">
+                        <div class="card-header">
+                            <h2>Historial de Turbulencia y Frenesí (30 min)</h2>
+                            <span class="badge">Últimas 48 horas</span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="frenzyChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="card chart-card">
+                        <div class="card-header">
+                            <h2>Parámetros Ambientales Estimados (30 min)</h2>
+                            <span class="badge">Monitoreo de Estabilidad</span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="waterChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alert Feed -->
+                <div class="card log-card">
+                    <div class="card-header">
+                        <h2>Registro del Servidor Local (Systemd Watchdog logs)</h2>
+                        <button class="btn btn-small btn-secondary" id="btn-refresh-telemetry">Actualizar BD</button>
+                    </div>
+                    <div class="log-table-container">
+                        <table class="log-table">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp (Intervalo)</th>
+                                    <th>Estimación Peces</th>
+                                    <th>Turbulencia Máxima</th>
+                                    <th>Evento Alimentación</th>
+                                    <th>Variables Ambientales</th>
+                                    <th>Estado Confort</th>
+                                    <th>Observaciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="telemetry-table-body">
+                                <!-- Populated dynamically by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: VISION / UPLOAD -->
+            <section id="vision-tab" class="tab-content">
+                <div class="vision-grid">
+                    <!-- Left: Upload & List -->
+                    <div class="vision-left">
+                        <!-- Drag & Drop Card -->
+                        <div class="card upload-card" id="drop-zone">
+                            <input type="file" id="video-input" accept="video/*" hidden>
+                            <div class="upload-icon">
+                                <svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" class="pulse-upload"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"></path></svg>
+                            </div>
+                            <h3>Cargar Video del Estanque</h3>
+                            <p>Arrastra tu archivo MP4 aquí o haz clic para explorar</p>
+                            <span class="file-limits">Tamaño recomendado: &lt; 50MB</span>
+                        </div>
+
+                        <!-- Video List -->
+                        <div class="card video-list-card">
+                            <div class="card-header">
+                                <h2>Videos Procesados y en Cola</h2>
+                            </div>
+                            <div class="video-list" id="video-list-container">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Live CV Visualizer -->
+                    <div class="vision-right">
+                        <div class="card player-card">
+                            <div class="card-header">
+                                <h2>Visualizador de Visión por Computadora</h2>
+                                <span class="badge id-badge" id="selected-video-name">Ningún video seleccionado</span>
+                            </div>
+                            
+                            <div class="player-container">
+                                <div class="player-placeholder" id="player-placeholder">
+                                    <svg viewBox="0 0 24 24" width="64" height="64" stroke="currentColor" stroke-width="1" fill="none" stroke-linecap="round" stroke-linejoin="round" class="placeholder-icon"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+                                    <p>Selecciona un video procesado de la lista para inspeccionar las detecciones</p>
+                                </div>
+                                <div class="video-wrapper" id="video-wrapper" style="display: none;">
+                                    <video id="processed-video-player" controls>
+                                        <source src="" type="video/mp4">
+                                        Tu navegador no soporta la reproducción de video.
+                                    </video>
+                                </div>
+                            </div>
+
+                            <div class="player-metadata" id="player-metadata" style="display: none;">
+                                <h3>Resultados del Análisis CV</h3>
+                                <div class="meta-grid">
+                                    <div class="meta-item">
+                                        <span class="meta-label">Peces Máximos:</span>
+                                        <span class="meta-value" id="meta-fish">--</span>
+                                    </div>
+                                    <div class="meta-item">
+                                        <span class="meta-label">Turbulencia Promedio:</span>
+                                        <span class="meta-value" id="meta-turb-avg">--</span>
+                                    </div>
+                                    <div class="meta-item">
+                                        <span class="meta-label">Frenesí Máximo:</span>
+                                        <span class="meta-value" id="meta-turb-max">--</span>
+                                    </div>
+                                    <div class="meta-item">
+                                        <span class="meta-label">Duración Frenesí:</span>
+                                        <span class="meta-value" id="meta-frenzy-duration">--</span>
+                                    </div>
+                                    <div class="meta-item">
+                                        <span class="meta-label">Peces Letárgicos:</span>
+                                        <span class="meta-value" id="meta-lethargic" style="color: var(--color-stress);">--</span>
+                                    </div>
+                                    <div class="meta-item">
+                                        <span class="meta-label">Peces Erráticos:</span>
+                                        <span class="meta-value" id="meta-erratic" style="color: var(--color-danger);">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: SETTINGS -->
+            <section id="settings-tab" class="tab-content">
+                <div class="settings-container">
+                    <div class="card settings-card">
+                        <div class="card-header">
+                            <h2>Configuración de la Región de Interés (ROI) y Algoritmo</h2>
+                        </div>
+                        <form id="settings-form" class="settings-form">
+                            <div class="form-section">
+                                <h3>1. Coordenadas de la ROI en el Estanque (Pixeles)</h3>
+                                <p class="section-help">Recorta la imagen para centrarte únicamente en la zona donde cae el alimento y excluir los bordes donde el viento puede crear falsas turbulencias.</p>
+                                <div class="form-grid-4">
+                                    <div class="form-group">
+                                        <label for="roi_x">Origen X (Izquierda)</label>
+                                        <input type="number" id="roi_x" name="roi_x" min="0" max="2000" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="roi_y">Origen Y (Superior)</label>
+                                        <input type="number" id="roi_y" name="roi_y" min="0" max="2000" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="roi_w">Ancho (W)</label>
+                                        <input type="number" id="roi_w" name="roi_w" min="50" max="2000" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="roi_h">Alto (H)</label>
+                                        <input type="number" id="roi_h" name="roi_h" min="50" max="2000" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-section">
+                                <h3>2. Umbrales de Turbulencia (Visión por Computador)</h3>
+                                <p class="section-help">Define los límites del Índice de Turbulencia para clasificar la agresividad del apetito de los peces.</p>
+                                <div class="form-grid-2">
+                                    <div class="form-group">
+                                        <label for="threshold_frenzy">Umbral de Frenesí (Activa motor de alimentación)</label>
+                                        <input type="number" id="threshold_frenzy" name="threshold_frenzy" min="1" max="100" step="0.5" required>
+                                        <span class="input-unit">% de movimiento</span>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="threshold_satiety">Umbral de Saciedad (Trigger de corte del relé)</label>
+                                        <input type="number" id="threshold_satiety" name="threshold_satiety" min="0" max="50" step="0.5" required>
+                                        <span class="input-unit">% de movimiento</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-section">
+                                <h3>3. Parámetros Biológicos Tolerables (Tilapia)</h3>
+                                <p class="section-help">Configura los límites ideales para tu especie de tilapia. El sistema alertará estrés fisiológico si los peces no comen dentro de estos rangos.</p>
+                                <div class="form-grid-3">
+                                    <div class="form-group">
+                                        <label for="temp_min">Temperatura Mínima (°C)</label>
+                                        <input type="number" id="temp_min" name="temp_min" min="15" max="35" step="0.5" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="temp_max">Temperatura Máxima (°C)</label>
+                                        <input type="number" id="temp_max" name="temp_max" min="20" max="40" step="0.5" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="oxygen_min">Oxígeno Disuelto Mín. (ppm)</label>
+                                        <input type="number" id="oxygen_min" name="oxygen_min" min="1" max="10" step="0.1" required>
+                                    </div>
+                                </div>
+                                <div class="form-grid-2" style="margin-top: 15px;">
+                                    <div class="form-group">
+                                        <label for="ph_min">pH Mínimo</label>
+                                        <input type="number" id="ph_min" name="ph_min" min="4" max="10" step="0.1" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="ph_max">pH Máximo</label>
+                                        <input type="number" id="ph_max" name="ph_max" min="5" max="14" step="0.1" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary" id="btn-save-settings">Guardar Configuración Local</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Notification Toast -->
+    <div class="toast" id="toast">
+        <span id="toast-message">Configuración guardada.</span>
+    </div>
+
+    <!-- App Logic Scripts -->
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/uploader.js') }}"></script>
+    <script>
+        // Tab routing logic
+        document.querySelectorAll('.menu-item').forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove active classes
+                document.querySelectorAll('.menu-item').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+                
+                // Add active to current
+                button.classList.add('active');
+                const tabId = button.getAttribute('data-tab');
+                document.getElementById(tabId).classList.add('active');
+                
+                // Update header title based on active tab
+                const pageTitle = document.getElementById('page-title');
+                const pageSubtitle = document.getElementById('page-subtitle');
+                
+                if (tabId === 'dashboard-tab') {
+                    pageTitle.textContent = "Panel de Monitoreo Local";
+                    pageSubtitle.textContent = "Monitoreo de turbulencia y variables biológicas en tiempo real (cada 30 min).";
+                    // Refresh charts
+                    if (window.fetchTelemetry) window.fetchTelemetry();
+                } else if (tabId === 'vision-tab') {
+                    pageTitle.textContent = "Procesamiento de Video (Piloto)";
+                    pageSubtitle.textContent = "Sube tus grabaciones del estanque para aplicar seguimiento de peces y turbulencia.";
+                    if (window.loadVideos) window.loadVideos();
+                } else if (tabId === 'settings-tab') {
+                    pageTitle.textContent = "Calibración y ROI";
+                    pageSubtitle.textContent = "Calibración fina de umbrales del algoritmo de visión y límites biológicos.";
+                    if (window.loadSettings) window.loadSettings();
+                }
+            });
+        });
+        
+        // Global Toast Notification Helper
+        window.showToast = function(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast show';
+            if (type === 'error') toast.classList.add('toast-error');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

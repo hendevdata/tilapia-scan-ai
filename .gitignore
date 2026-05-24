@@ -1,0 +1,28 @@
+# Virtual Environment
+venv/
+ENV/
+env/
+.venv/
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Databases
+*.db
+*.sqlite
+
+# Application Video Directories (Keep folders but empty)
+uploads/*
+!uploads/.gitkeep
+processed/*
+!processed/.gitkeep
+
+# IDEs & System files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
