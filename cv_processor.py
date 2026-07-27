@@ -160,6 +160,10 @@ def process_video(input_path, output_path, roi_settings, progress_callback=None)
     lower_brown = np.array([4, 20, 30])
     upper_brown = np.array([32, 200, 220])
 
+    # Pre-allocate morphological kernels once outside the frame loop
+    kernel_ellipse_5 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+    kernel_ellipse_3 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+
     while True:
         ret, frame = cap.read()
         if not ret:
@@ -173,9 +177,8 @@ def process_video(input_path, output_path, roi_settings, progress_callback=None)
         fgmask = fgbg.apply(blurred)
         
         # Clean mask using morphological operations
-        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
-        fgmask_cleaned = cv2.morphologyEx(fgmask, cv2.MORPH_OPEN, kernel)
-        fgmask_cleaned = cv2.morphologyEx(fgmask_cleaned, cv2.MORPH_CLOSE, kernel)
+        fgmask_cleaned = cv2.morphologyEx(fgmask, cv2.MORPH_OPEN, kernel_ellipse_5)
+        fgmask_cleaned = cv2.morphologyEx(fgmask_cleaned, cv2.MORPH_CLOSE, kernel_ellipse_5)
         
         # Crop cleaned mask to ROI for turbulence/motion analysis
         roi_mask = fgmask_cleaned[ry:ry+rh, rx:rx+rw]
@@ -220,7 +223,7 @@ def process_video(input_path, output_path, roi_settings, progress_callback=None)
         roi_img = frame[ry:ry+rh, rx:rx+rw]
         hsv_roi = cv2.cvtColor(roi_img, cv2.COLOR_BGR2HSV)
         food_mask = cv2.inRange(hsv_roi, lower_brown, upper_brown)
-        food_mask_cleaned = cv2.morphologyEx(food_mask, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3)))
+        food_mask_cleaned = cv2.morphologyEx(food_mask, cv2.MORPH_OPEN, kernel_ellipse_3)
         
         color_contours, _ = cv2.findContours(food_mask_cleaned, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         color_pellets = 0
@@ -254,16 +257,13 @@ def process_video(input_path, output_path, roi_settings, progress_callback=None)
             behavior_state = "NADO PASIVO / SACIADO"
             state_color = (0, 255, 0)
 
-        # 4. Fish health diagnosis & rendering
-        overlay = frame.copy()
-        
-        # Keep track of diagnosed categories in this specific frame
+        # 4. Fish health diagnosis & rendering directly on frame
         frame_lethargic = 0
         frame_erratic = 0
         
         # Draw ROI Rectangle
-        cv2.rectangle(overlay, (rx, ry), (rx + rw, ry + rh), (255, 255, 0), 2)
-        cv2.putText(overlay, "ROI ALIMENTACION", (rx + 5, ry - 8), 
+        cv2.rectangle(frame, (rx, ry), (rx + rw, ry + rh), (255, 255, 0), 2)
+        cv2.putText(frame, "ROI ALIMENTACION", (rx + 5, ry - 8), 
                     cv2.FONT_HERSHEY_SIMPLEX, 0.45 * np.sqrt(scale_factor), (255, 255, 0), 1, cv2.LINE_AA)
 
         # Diagnose each fish based on its trajectory history
@@ -296,31 +296,28 @@ def process_video(input_path, output_path, roi_settings, progress_callback=None)
                     frame_erratic += 1
             
             # Draw tracking center dot
-            cv2.circle(overlay, (cx, cy), int(4 * np.sqrt(scale_factor)), color_diag, -1)
+            cv2.circle(frame, (cx, cy), int(4 * np.sqrt(scale_factor)), color_diag, -1)
             
             # Print diagnostic tag next to ID
             lbl = f"ID {obj_id} [{diagnosis}]"
-            cv2.putText(overlay, lbl, (cx + int(5*np.sqrt(scale_factor)), cy - int(5*np.sqrt(scale_factor))), 
+            cv2.putText(frame, lbl, (cx + int(5*np.sqrt(scale_factor)), cy - int(5*np.sqrt(scale_factor))), 
                         cv2.FONT_HERSHEY_SIMPLEX, 0.38 * np.sqrt(scale_factor), color_diag, 1, cv2.LINE_AA)
             
             # Draw bounding box matching diagnosis
             for (startX, startY, endX, endY) in rects:
                 if startX <= cx <= endX and startY <= cy <= endY:
-                    cv2.rectangle(overlay, (startX, startY), (endX, endY), color_diag, 1)
+                    cv2.rectangle(frame, (startX, startY), (endX, endY), color_diag, 1)
                     break
         
         # Accumulate peak sickness metrics
         max_lethargic_in_frame = max(max_lethargic_in_frame, frame_lethargic)
         max_erratic_in_frame = max(max_erratic_in_frame, frame_erratic)
 
-        # Alpha blend overlay details
-        cv2.addWeighted(overlay, 0.85, frame, 0.15, 0, frame)
-
-        # Draw Header HUD (Black translucent bar)
+        # Draw Header HUD (Translucent slice blend on top region only)
         hud_h = int(80 * np.sqrt(scale_factor)) if height > 480 else 80
-        hud_overlay = frame.copy()
-        cv2.rectangle(hud_overlay, (0, 0), (width, hud_h), (20, 20, 20), -1)
-        cv2.addWeighted(hud_overlay, 0.75, frame, 0.25, 0, frame)
+        hud_slice = frame[0:hud_h, 0:width]
+        dark_bar = np.full_like(hud_slice, (20, 20, 20), dtype=np.uint8)
+        cv2.addWeighted(dark_bar, 0.75, hud_slice, 0.25, 0, hud_slice)
         
         # HUD Text items
         txt_size = 0.5 * np.sqrt(scale_factor)
